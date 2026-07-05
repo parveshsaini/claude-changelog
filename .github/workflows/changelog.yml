@@ -1,0 +1,56 @@
+name: changelog-to-x
+
+on:
+  schedule:
+    # Every hour, on the hour (UTC).
+    - cron: "0 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Print tweets instead of posting"
+        type: boolean
+        default: false
+
+concurrency:
+  group: changelog-to-x
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run build
+
+      - name: Post new changelog versions
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_TOKEN_SECRET: ${{ secrets.X_ACCESS_TOKEN_SECRET }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: npm start
+
+      - name: Commit updated state
+        run: |
+          if [[ -n "$(git status --porcelain .state)" ]]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add .state
+            git commit -m "chore: advance changelog state [skip ci]"
+            git push
+          else
+            echo "No state change to commit."
+          fi
