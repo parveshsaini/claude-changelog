@@ -1,0 +1,17 @@
+{
+  "name": "claude-changelog",
+  "version": "1.0.0",
+  "description": "Posts a tweet whenever a new Claude Code version ships, driven by the official CHANGELOG.md.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "dry": "cross-env DRY_RUN=true tsx src/index.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
